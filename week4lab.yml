@@ -1,0 +1,86 @@
+---
+- name: Week 4 Lab 
+  hosts: all
+  become: true
+  tasks:
+    - name: Install Apache
+      dnf:
+        name: httpd
+        state: present
+    
+    - name: Install Firefox
+      dnf:  
+        name: firefox 
+        state: present
+
+    - name: Install Git
+      dnf:
+        name: git 
+        state: present
+
+    - name: Install MariaDB server
+      dnf: 
+        name: mariadb-server
+        state: present 
+      
+    - name: Download Google Chrome GPG key
+      get_url:
+        url: https://dl.google.com/linux/linux_signing_key.pub
+        dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-google-chrome
+
+    - name: Import Google Chrome GPG key
+      rpm_key:
+        state: present
+        key: /etc/pki/rpm-gpg/RPM-GPG-KEY-google-chrome
+
+    - name: Download Google Chrome repo rpm
+      get_url:
+        url: https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
+        dest: /tmp/google-chrome-stable_current_x86_64.rpm
+
+    - name: Install Google Chrome repo
+      dnf:
+        name: /tmp/google-chrome-stable_current_x86_64.rpm
+        state: present
+
+    - name: Install Google Chrome
+      dnf:
+        name: google-chrome-stable
+        state: present
+
+    - name: Clean up Chrome repo rpm file
+      file:
+        path: /tmp/google-chrome-stable_current_x86_64.rpm
+        state: absent
+
+    - name: Remove Google Chrome
+      dnf:
+        name: google-chrome-stable
+        state: absent
+
+    - name: Restart the remote system
+      ansible.builtin.reboot:
+        reboot_timeout: 300
+
+    - name: Enable HTTPD service to start on boot
+      ansible.builtin.systemd:
+        name: httpd
+        enabled: yes
+        state: started
+
+    - name: Restart HTTPD service
+      ansible.builtin.systemd:
+        name: httpd
+        state: restarted
+
+- name: Copy HTML files
+  hosts: all
+  become: yes
+  tasks:
+    - name: copy sample HTML files
+      ansible.builtin.copy:
+        src: /root/html_files/
+        dest: /var/www/html/
+        mode: '0644'
+        owner: root 
+        group: root 
